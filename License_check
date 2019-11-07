@@ -1,0 +1,66 @@
+[richuser@ansible License_check]$ more License_check.sh 
+#!/bin/bash
+#Create by 5
+#License_check script
+
+day=`date +%Y%m%d`
+dir="/home/richuser/License_check"
+
+cd /home/richuser/License_check/
+sqlplus /nolog  @$dir/41003_collect_omc1.sql
+sqlplus /nolog  @$dir/41003_collect_omc2.sql
+
+cat alarm_list_omc*.csv > alarm_list.csv
+grep -i RL alarm_list.csv  | awk -F ',' '{print $1}' | sort | uniq > Items
+for i in `cat Items`
+do
+        echo ${i}
+        grep "${i}" alarm_list.csv  | awk -F ':' '{print $1"$"$2}' | awk -F '/' '{print $1"$"$2}' | awk -F '$' '{print $1":"$2-$3}' > Items_count.csv
+        awk -F ':' '{sum[$1]+=$2}END{for(j in sum){print j,"|",sum[j]}}' Items_count.csv  >> Item_tmp.csv
+done
+
+cat Item_tmp.csv > result_${day}.csv ; rm Item_tmp.csv;rm Items_count.csv;rm Items; rm alarm_list_omc*.csv
+
+[richuser@ansible License_check]$ more 41003_collect_omc*
+::::::::::::::
+41003_collect_omc1.sql
+::::::::::::::
+connect rdr/rdr@oss ;
+/* initial setting*/
+set linesize 150
+set pagesize 0
+set heading off 
+set feed off 
+set feedback off 
+set colsep '|'
+#col DN format a25
+col SUPPLEMENTARY_INFO format a120
+spool /home/richuser/License_check/alarm_list_omc1.csv ;
+        select DN,ALARM_TIME,SUPPLEMENTARY_INFO 
+        from fx_alarm 
+        where alarm_number = 41003
+        and alarm_status = 1
+        order by alarm_time desc;
+spool off ;
+exit;
+::::::::::::::
+41003_collect_omc2.sql
+::::::::::::::
+connect rdr/rdr@oss2 ;
+/* initial setting*/
+set linesize 150
+set pagesize 0
+set heading off 
+set feed off 
+set feedback off 
+set colsep '|'
+#col DN format a25
+col SUPPLEMENTARY_INFO format a120
+spool /home/richuser/License_check/alarm_list_omc2.csv ;
+        select DN,ALARM_TIME,SUPPLEMENTARY_INFO 
+        from fx_alarm 
+        where alarm_number = 41003
+        and alarm_status = 1
+        order by alarm_time desc;
+spool off ;
+exit;
