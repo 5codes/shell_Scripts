@@ -1,0 +1,19 @@
+#!/bin/sh
+#set -x
+
+DATE_NAME=`date "+%Y-%m-%d" -d '-1 day'`
+TARGET_DIR=/home/omc/tool/Log_login/Login_Log
+
+if [ ! -d "${TARGET_DIR}/${DATE_NAME}" ]; then
+  mkdir -p ${TARGET_DIR}/${DATE_NAME}
+fi
+
+for i in "vm20" "vm21" "vm22" "vm23"
+do 
+        scp omc@${i}:/var/opt/oss/log/audit/oss_security_SysCluster_0_0.log ${TARGET_DIR}/${DATE_NAME}/OMC1_${i}_login-${DATE_NAME}.log
+        sed -i -n /${DATE_NAME}T/,/${DATE_NAME}T/p  ${TARGET_DIR}/${DATE_NAME}/OMC2_${i}_login-${DATE_NAME}.log
+        cat ${TARGET_DIR}/${DATE_NAME}/OMC2_${i}_login-${DATE_NAME}.log | grep -v '7.191.253.15' > ${TARGET_DIR}/${DATE_NAME}/OMC1_${i}_login-${DATE_NAME}.log.tmp
+        mv ${TARGET_DIR}/${DATE_NAME}/OMC2_${i}_login-${DATE_NAME}.log.tmp  ${TARGET_DIR}/${DATE_NAME}/OMC2_${i}_login-${DATE_NAME}.log
+done
+
+#find ${TARGET_DIR} -type d  -mtime +7 -exec rm -f {}  \;
