@@ -1,0 +1,30 @@
+#! /bin/bash
+Date1=`date +%Y-%m-%d`
+Date2=`date +%Y-%m-%d --date="-1 day"`
+datestamp1=`echo $Date1-T00:00`
+datestamp2=`echo $Date2-T00:00`
+
+rm -rf /home/omc/tool/FmLog/oss_activity0_*log
+find  /home/omc/tool/FmLog/ -name 'NOKIA_FM_LOG*log' -mtime +5 | xargs rm -rf 
+
+cp /var/opt/oss/log/fmascii/oss_activity0_* /home/omc/tool/FmLog/
+gunzip /home/omc/tool/FmLog/oss_activity0_*gz
+
+for i in `ls /home/omc/tool/FmLog/oss_activity0_*log`
+do 
+        stamp=`echo $i | awk -F '_' '{print $3}' | awk -F '.' '{print $1}'`
+        if (( $stamp < 10)); then 
+                mv $i /home/omc/tool/FmLog/oss_activity0_0$stamp.log
+        fi
+done
+
+for i in `ls -r /home/omc/tool/FmLog/oss_activity0_*log`
+do
+        cat $i >> /home/omc/tool/FmLog/NOKIA_FM_LOG-all-$Date2.log
+done
+
+sed -n /$datestamp2/,/$datestamp1/p /home/omc/tool/FmLog/NOKIA_FM_LOG-all-$Date2.log > /home/omc/tool/FmLog/result/NOKIA_FM_LOG-$Date2.log
+
+cp /home/omc/tool/FmLog/result/NOKIA_FM_LOG-$Date2.log /home/ftirpuser/fm/
+find /home/ftirpuser/fm/ -name '*.log' -mtime +15 | xargs rm -rf
+find /home/omc/tool/FmLog -name 'oss_activity0_*.log' | xargs rm -rf 
