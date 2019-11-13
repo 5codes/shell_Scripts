@@ -15,7 +15,7 @@ grep -i RL alarm_list.csv  | awk -F ',' '{print $1}' | sort | uniq > Items
 for i in `cat Items`
 do
         echo ${i}
-        grep "${i}" alarm_list.csv  | awk -F ':' '{print $1"$"$2}' | awk -F '/' '{print $1"$"$2}' | awk -F '$' '{print $1":"$2-$3}' > Items_count.csv
+        grep "${i}" alarm_list.csv | sed 's/\(.*\):\(.*\)/\1$\2/' |  sed 's/\(.*\)\/\(.*\)/\1$\2/' | awk -F '$' '{print $1":"$2-$3}' > Items_count.csv
         awk -F ':' '{sum[$1]+=$2}END{for(j in sum){print j,"|",sum[j]}}' Items_count.csv  >> Item_tmp.csv
 done
 
@@ -64,3 +64,4 @@ spool /home/richuser/License_check/alarm_list_omc2.csv ;
         order by alarm_time desc;
 spool off ;
 exit;
+[richuser@ansible License_check]$ 
